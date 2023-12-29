@@ -1,1 +1,2 @@
-
+* minimal syntax
+* 
