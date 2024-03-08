@@ -1,1 +1,7 @@
-
+i8 main(char c){
+    if(c == 1){
+        return 1;
+    }else{
+        return -1;
+    }
+}

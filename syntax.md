@@ -1,10 +1,12 @@
-program -> (function | expression | statement | operator)*
-function -> type IDENTIFIER((type IDENTIFIER,)*)block
-type -> "int" | "char" | "float" | "void" | "struct" | TYPE | FUNCTION_ID | "double" | type"*"
-expression ->  (binary | unary)+";"
-block -> "{"program"}"
-binary -> literal operator literal
-unary -> operator literal
-literal -> NUMBER | STRING
-assignment -> IDENTIFIER "=" expression";"
-decl -> type IDENTIFIER";"
+<program> ::= <function> | <assignment>+
+<function> ::= <type> <ID> "(" (<type> <ID> ", ")* ")" <block>
+<expression> ::= (<binary> | <unary> " " )+
+<block> ::= "{\n" <program> "}\n"
+<binary> ::= <lit> <bop> <lit>
+<unary> ::= <uop> <lit>
+<lit> ::=  ([0-9] [1-9]+) | ("\"" [a-z]+ "\"")
+<assignment> ::= <ID> " = " <expression> ";\n"
+<ID> ::= ([a-z]+) [0-9]*
+<bop> ::= " + " | " - " | " * " | " / "
+<uop> ::= " ~" | " !"
+<type> ::= "int " | "char " | "float " | "void " | "struct " | "double "
