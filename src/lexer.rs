@@ -97,7 +97,7 @@ impl TokenType{
         }
     }
     pub fn is_keyword(self) -> bool{
-        self.is_keyword() || self.is_type()
+        self.is_control() || self.is_type()
     }
     pub fn is_identifier(self) -> bool{
         match self{

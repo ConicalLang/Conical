@@ -2,6 +2,7 @@ use std::{env, fs, io::Stdout};
 mod lexer;
 mod parser;
 mod tree;
+mod scanner;
 #[warn(unused)]
 fn main() {
     let args: Vec<String> = env::args().collect();
