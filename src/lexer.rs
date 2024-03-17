@@ -1,15 +1,20 @@
 use std::{collections::binary_heap::Iter, env, fs, iter::{self, from_fn}, vec};
-
-
 #[derive(Debug, Clone, Copy)]
-pub enum TokenType{
-    //LITERALS
-    LITERAL = 0,
-    IDENTIFIER,
-    SEMICOLON,
-    OPENBRACKET,CLOSEBRACKET,
-    OPENPAREN, CLOSEPAREN,
-    OPENSQR, CLOSESQR,
+pub enum Types{
+    BOOL, I8, I16, I32, I64, U8, U16, U32, U64, USIZE, F32, F64, CHAR, FUNCTION,
+}
+#[derive(Debug, Clone, Copy)]
+pub enum Controls{
+    BREAK, CONTINUE, SWITCH, RETURN, FOR, WHILE, IF, ELSE, DO, STRUCT, ENUM, TYPE, TYPEDEF, GOTO, TRUE, FALSE, IMPL,
+    SIZEOF, TYPEOF, DEFAULT,
+}
+#[derive(Debug, Clone, Copy)]
+pub enum Keywords{
+    Type(Types),
+    Control(Controls)
+}
+#[derive(Debug, Clone, Copy)]
+pub enum Ops{
     EQL, EQLEQL,
     NOTEQL, GRT,
     LST, GRTEQL,
@@ -17,15 +22,27 @@ pub enum TokenType{
     OR, NOT, AND, XOR,
     LOR, LAND,
     ARROW, DOT,
-    COMMA,
     DIV, PLUS, MINUS, STAR,
-    //keywords
-    BREAK, CONTINUE, SWITCH, RETURN, FOR, WHILE, IF, ELSE, DO, STRUCT, ENUM, TYPE, TYPEDEF, GOTO, TRUE, FALSE, IMPL,
-    BOOL, I8, I16, I32, I64, U8, U16, U32, U64, USIZE, F32, F64, CHAR, FUNCTION, SIZEOF, TYPEOF, DEFAULT,
+}
+#[derive(Debug, Clone, Copy)]
+pub enum Syntaxs{
+    SEMICOLON,
+    OPENBRACKET,CLOSEBRACKET,
+    OPENPAREN, CLOSEPAREN,
+    OPENSQR, CLOSESQR,
+    COMMA,
+}
+#[derive(Debug, Clone, Copy)]
+pub enum TokenType{
+    LITERAL,
+    IDENTIFIER,
+    KEYWORD(Keywords),
+    SYNTAX(Syntaxs),
+    OP(Ops),
     EOF
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LiteralType{
     NUMBER(usize),
     DECIMAL(f64),
@@ -33,51 +50,72 @@ pub enum LiteralType{
     CHARACTER(char),
     BOOL(bool),
 }
-#[derive(Debug)]
-pub enum GeneralTokenType {
-    OPERATOR,
-    KEYWORD,
-    DELIM,
-    BRACKET
-}
 
-#[derive(Debug)]
+
+#[derive(Debug, Clone)]
 pub struct Token{
     pub token: TokenType,
     pub value: Option<LiteralType>,
-    pub token_type: Option<GeneralTokenType>,
     pub line: i32,
 }
 impl Token{
-    fn new(token: TokenType, token_type: Option<GeneralTokenType>, value: Option<LiteralType>, line: i32) -> Self{
+    fn new(token: TokenType, value: Option<LiteralType>, line: i32) -> Self{
         Self{
             token: token,
             value: value,
             line: line,
-            token_type: token_type,
+            
         }
     }
     
     
 }
 
+impl TokenType{
+    pub fn is_operator(self) -> bool{
+        match self{
+            TokenType::OP(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_type(self) -> bool{
+        match self{
+            TokenType::KEYWORD(Keywords::Type(_)) => true,
+            _ => false,
+        }
+    }
+    pub fn is_control(self) -> bool{
+        match self{
+            TokenType::KEYWORD(Keywords::Control(_)) => true,
+            _ => false,
+        }
+    }
+    pub fn is_delim(self) -> bool{
+        match self{
+            TokenType::SYNTAX(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_keyword(self) -> bool{
+        self.is_keyword() || self.is_type()
+    }
+    pub fn is_identifier(self) -> bool{
+        match self{
+            TokenType::IDENTIFIER => true,
+            _ => false,
+        }
+    }
+    pub fn is_literal(self) -> bool{
+        match self{
+            TokenType::LITERAL => true,
+            _ => false,
+        }
+    }
+    
+}
 
-// pub static OPS: Vec<TokenType> = vec![TokenType::EQL, TokenType::EQLEQL,
-// TokenType::NOTEQL, TokenType::GRT,
-// TokenType::LST, TokenType::GRTEQL,
-// TokenType::LSTEQL,
-// TokenType::OR, TokenType::NOT, TokenType::AND, TokenType::XOR,
-// TokenType::LOR, TokenType::LAND,
-// TokenType::ARROW, TokenType::DOT,TokenType::DIV, TokenType::PLUS, TokenType::MINUS, TokenType::STAR];
 
-// pub static KEYWORDS: Vec<TokenType> = vec![TokenType::BREAK, TokenType::CONTINUE, TokenType::SWITCH, TokenType::RETURN, TokenType::FOR, 
-// TokenType::WHILE, TokenType::IF, TokenType::ELSE, TokenType::DO, TokenType::STRUCT, TokenType::ENUM, TokenType::TYPE, TokenType::TYPEDEF, 
-// TokenType::GOTO, TokenType::TRUE, TokenType::FALSE, TokenType::IMPL,TokenType::BOOL, TokenType::I8, TokenType::I16, TokenType::I32, TokenType::I64, 
-// TokenType::U8, TokenType::U16, TokenType::U32, TokenType::U64, TokenType::USIZE, TokenType::F32, TokenType::F64, TokenType::CHAR, TokenType::FUNCTION, 
-// TokenType::SIZEOF, TokenType::TYPEOF, TokenType::DEFAULT];
 
-// pub static TYPES: Vec<TokenType> = vec![TokenType::BOOL, TokenType::I8, TokenType::I16, TokenType::I32, TokenType::I64, 
-// TokenType::U8, TokenType::U16, TokenType::U32, TokenType::U64, TokenType::USIZE, TokenType::F32, TokenType::F64, TokenType::CHAR, TokenType::FUNCTION];
 
 pub fn lex(input: &str) -> Vec<Token>{
     let mut out: Vec<Token> = vec![];
@@ -89,85 +127,85 @@ pub fn lex(input: &str) -> Vec<Token>{
         match token{
             '\n' | '\r' => line+=1,
             ' ' => {},
-            ';' => out.push(Token::new(TokenType::SEMICOLON, Some(GeneralTokenType::DELIM), None, line)),
-            '{' => out.push(Token::new(TokenType::OPENBRACKET, Some(GeneralTokenType::BRACKET),None, line)),
-            '}' => out.push(Token::new(TokenType::CLOSEBRACKET, Some(GeneralTokenType::BRACKET),None, line)),
-            '(' => out.push(Token::new(TokenType::OPENPAREN, Some(GeneralTokenType::BRACKET),None, line)),
-            ')' => out.push(Token::new(TokenType::CLOSEPAREN, Some(GeneralTokenType::BRACKET),None, line)),
-            '[' => out.push(Token::new(TokenType::OPENSQR, Some(GeneralTokenType::BRACKET),None, line)),
-            ']' => out.push(Token::new(TokenType::CLOSESQR, Some(GeneralTokenType::BRACKET),None, line)),
-            '~' => out.push(Token::new(TokenType::XOR, Some(GeneralTokenType::OPERATOR),None, line)),
-            ',' => out.push(Token::new(TokenType::COMMA, Some(GeneralTokenType::DELIM),None, line)),
-            '*' => out.push(Token::new(TokenType::STAR, Some(GeneralTokenType::OPERATOR), None, line)),
-            '+' => out.push(Token::new(TokenType::PLUS, Some(GeneralTokenType::OPERATOR), None, line)),
-            '.' => out.push(Token::new(TokenType::DOT, None, None, line)),
+            ';' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::SEMICOLON), None, line)),
+            '{' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::OPENBRACKET), None, line)),
+            '}' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::CLOSEBRACKET), None, line)),
+            '(' =>out.push(Token::new(TokenType::SYNTAX(Syntaxs::OPENPAREN), None, line)),
+            ')' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::CLOSEPAREN), None, line)),
+            '[' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::OPENSQR), None, line)),
+            ']' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::CLOSESQR), None, line)),
+            ',' => out.push(Token::new(TokenType::SYNTAX(Syntaxs::COMMA), None, line)),
+            '~' => out.push(Token::new(TokenType::OP(Ops::XOR), None, line)),
+            '*' => out.push(Token::new(TokenType::OP(Ops::STAR), None, line)),
+            '+' => out.push(Token::new(TokenType::OP(Ops::PLUS), None, line)),
+            '.' => out.push(Token::new(TokenType::OP(Ops::DOT), None, line)),
             '=' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '='{
-                        out.push(Token::new(TokenType::EQLEQL, Some(GeneralTokenType::OPERATOR),None, line));
+                        out.push(Token::new(TokenType::OP(Ops::EQLEQL), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::EQL, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::EQL), None, line));
                     }
                 }
             },
             '!' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '='{
-                        out.push(Token::new(TokenType::NOTEQL, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::NOTEQL), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::NOT, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::NOT), None, line));
                     }
                 }
             },
             '<' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '='{
-                        out.push(Token::new(TokenType::LSTEQL, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::LSTEQL), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::LST, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::LST), None, line));
                     }
                 }
             },
             '>' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '='{
-                        out.push(Token::new(TokenType::GRTEQL, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::GRTEQL), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::GRT, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::GRT), None, line));
                     }
                 }
             },
             '-' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '>'{
-                        out.push(Token::new(TokenType::ARROW, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::ARROW), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::MINUS, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::MINUS), None, line));
                     }
                 }
             },
             '|' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '|'{
-                        out.push(Token::new(TokenType::LOR, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::LOR), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::OR, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::OR), None, line));
                     }
                 }
             },
             '&' => {
                 if let Some((_t, n)) = src.peek(){
                     if *n == '&'{
-                        out.push(Token::new(TokenType::LAND, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::LAND), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::AND, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::AND), None, line));
                     }
                 }
             },
@@ -180,7 +218,7 @@ pub fn lex(input: &str) -> Vec<Token>{
                         .collect();
                         
                     }else{
-                        out.push(Token::new(TokenType::DIV, Some(GeneralTokenType::OPERATOR), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::DIV), None, line));
                     }
                 }
             },
@@ -191,7 +229,7 @@ pub fn lex(input: &str) -> Vec<Token>{
                 .map(|(_t, r)|{r})))
                 .collect::<String>();
                 ou.remove(0);
-                out.push(Token::new(TokenType::LITERAL, None, Some(LiteralType::STRING(ou)), line));
+                out.push(Token::new(TokenType::LITERAL, Some(LiteralType::STRING(ou)), line));
                 src.next();
 
             },
@@ -201,9 +239,9 @@ pub fn lex(input: &str) -> Vec<Token>{
                 .chain(from_fn(|| src.by_ref().next_if(|(_t, s)| s.is_ascii_digit() || *s == '.').map(|(_t, r)| {r})))
                 .collect::<String>();
                 if ou.contains('.') {
-                    out.push(Token::new(TokenType::LITERAL, None, Some(LiteralType::DECIMAL(ou.parse().unwrap())), line))
+                    out.push(Token::new(TokenType::LITERAL, Some(LiteralType::DECIMAL(ou.parse().unwrap())), line));
                 }else {
-                    out.push(Token::new(TokenType::LITERAL, None, Some(LiteralType::NUMBER(ou.parse().unwrap())), line))
+                    out.push(Token::new(TokenType::LITERAL, Some(LiteralType::NUMBER(ou.parse().unwrap())), line));
                 }
             },
 //SWITCH, RETURN, FOR, WHILE, IF, ELSE, DO, STRUCT, ENUM, TYPE, TYPEDEF, GOTO, TRUE, FALSE, 
@@ -213,55 +251,56 @@ pub fn lex(input: &str) -> Vec<Token>{
                 .chain(from_fn(|| src.by_ref().next_if(|(_t, s)| s.is_alphanumeric()).map(|(_t, r)| {r})))
                 .collect::<String>();
                 let mut out_option = None;
-                let mut out_gen = Some(GeneralTokenType::KEYWORD);
+                
                 let mut out_type: TokenType =
                 match ou.as_str(){
-                    "break" => TokenType::BREAK,
-                    "continue" => TokenType::CONTINUE,
-                    "switch" => TokenType::SWITCH,
-                    "return" => TokenType::RETURN,
-                    "for" => TokenType::FOR,
-                    "while" => TokenType::WHILE,
-                    "if" => TokenType::IF,
-                    "else" => TokenType::ELSE,
-                    "do" => TokenType::DO,
-                    "struct" => TokenType::STRUCT,
-                    "enum" => TokenType::ENUM,
-                    "type" => TokenType::TYPE,
-                    "typedef" => TokenType::TYPEDEF,
-                    "goto" => TokenType::GOTO,
-                    "true" => TokenType::TRUE,
-                    "false" => TokenType::FALSE,
-                    "bool" => TokenType::BOOL,
-                    "i8" => TokenType::I8,
-                    "i16" => TokenType::I16,
-                    "i32" => TokenType::I32,
-                    "i64" => TokenType::I64,
-                    "u8" => TokenType::U8,
-                    "u16" => TokenType::U16,
-                    "u32" => TokenType::U32,
-                    "u64" => TokenType::U64,
-                    "f32" => TokenType::F32,
-                    "f64" => TokenType::F64,
-                    "usize" => TokenType::USIZE,
-                    "char" => TokenType::CHAR,
-                    "func" => TokenType::FUNCTION,
-                    "sizeof" => TokenType::SIZEOF,
-                    "typeof" => TokenType::TYPEOF,
-                    "default" => TokenType::DEFAULT,
-                    "impl" => TokenType::IMPL,
+                    "break" => TokenType::KEYWORD(Keywords::Control(Controls::BREAK)),
+                    "continue" => TokenType::KEYWORD(Keywords::Control(Controls::CONTINUE)),
+                    "switch" => TokenType::KEYWORD(Keywords::Control(Controls::SWITCH)),
+                    "return" => TokenType::KEYWORD(Keywords::Control(Controls::RETURN)),
+                    "for" => TokenType::KEYWORD(Keywords::Control(Controls::FOR)),
+                    "while" => TokenType::KEYWORD(Keywords::Control(Controls::WHILE)),
+                    "if" => TokenType::KEYWORD(Keywords::Control(Controls::IF)),
+                    "else" => TokenType::KEYWORD(Keywords::Control(Controls::ELSE)),
+                    "do" => TokenType::KEYWORD(Keywords::Control(Controls::DO)),
+                    "struct" => TokenType::KEYWORD(Keywords::Control(Controls::STRUCT)),
+                    "enum" => TokenType::KEYWORD(Keywords::Control(Controls::ENUM)),
+                    "type" => TokenType::KEYWORD(Keywords::Control(Controls::TYPE)),
+                    "typedef" => TokenType::KEYWORD(Keywords::Control(Controls::TYPEDEF)),
+                    "goto" => TokenType::KEYWORD(Keywords::Control(Controls::GOTO)),
+                    "true" => TokenType::KEYWORD(Keywords::Control(Controls::TRUE)),
+                    "false" => TokenType::KEYWORD(Keywords::Control(Controls::FALSE)),
+                    "sizeof" => TokenType::KEYWORD(Keywords::Control(Controls::SIZEOF)),
+                    "typeof" => TokenType::KEYWORD(Keywords::Control(Controls::TYPEOF)),
+                    "default" => TokenType::KEYWORD(Keywords::Control(Controls::DEFAULT)),
+                    "impl" => TokenType::KEYWORD(Keywords::Control(Controls::IMPL)),
+                    "bool" => TokenType::KEYWORD(Keywords::Type(Types::BOOL)),
+                    "i8" => TokenType::KEYWORD(Keywords::Type(Types::I8)),
+                    "i16" => TokenType::KEYWORD(Keywords::Type(Types::I16)),
+                    "i32" => TokenType::KEYWORD(Keywords::Type(Types::I32)),
+                    "i64" => TokenType::KEYWORD(Keywords::Type(Types::I64)),
+                    "u8" => TokenType::KEYWORD(Keywords::Type(Types::U8)),
+                    "u16" => TokenType::KEYWORD(Keywords::Type(Types::U16)),
+                    "u32" => TokenType::KEYWORD(Keywords::Type(Types::U32)),
+                    "u64" => TokenType::KEYWORD(Keywords::Type(Types::U64)),
+                    "f32" => TokenType::KEYWORD(Keywords::Type(Types::F32)),
+                    "f64" => TokenType::KEYWORD(Keywords::Type(Types::F64)),
+                    "usize" => TokenType::KEYWORD(Keywords::Type(Types::USIZE)),
+                    "char" => TokenType::KEYWORD(Keywords::Type(Types::CHAR)),
+                    "func" => TokenType::KEYWORD(Keywords::Type(Types::FUNCTION)),
+                    
 
                     m => {
                     out_option = Some(LiteralType::STRING(String::from(m)));
-                    out_gen = None;
+                    
                     TokenType::IDENTIFIER
                 }
                 };
-                out.push(Token::new(out_type, out_gen, out_option, line))
+                out.push(Token::new(out_type, out_option, line))
             },
             cx =>{panic!("Unknown character: {}, at line: {}", cx, line);}
         }
     }
-    out.push(Token::new(TokenType::EOF, None, None, line));
+    out.push(Token::new(TokenType::EOF,  None, line));
     out
 }
