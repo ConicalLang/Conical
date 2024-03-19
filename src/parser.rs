@@ -8,7 +8,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use slab_tree::{NodeId, Tree, TreeBuilder};
 
-use crate::lexer::{LiteralType, Ops, Syntaxs, Token, TokenType};
+use crate::lexer::{Ops, Token, TokenType};
 
 use crate::scanner::*;
 

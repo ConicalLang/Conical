@@ -1,4 +1,4 @@
-use std::{collections::binary_heap::Iter, env, fs, iter::{self, from_fn}, vec};
+use std::{iter::{self, from_fn}, vec};
 #[derive(Debug, Clone, Copy)]
 pub enum Types{
     BOOL, I8, I16, I32, I64, U8, U16, U32, U64, USIZE, F32, F64, CHAR, FUNCTION,

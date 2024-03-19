@@ -1,4 +1,4 @@
-use std::{env, fs, io::Stdout};
+use std::{env, fs};
 mod lexer;
 mod parser;
 mod tree;
