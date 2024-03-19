@@ -19,7 +19,7 @@ pub enum Ops{
     NOTEQL, GRT,
     LST, GRTEQL,
     LSTEQL,
-    OR, NOT, AND, XOR,
+    OR, BANG, AND, XOR,
     LOR, LAND,
     ARROW, DOT,
     DIV, PLUS, MINUS, STAR,
@@ -59,7 +59,7 @@ pub struct Token{
     pub line: i32,
 }
 impl Token{
-    fn new(token: TokenType, value: Option<LiteralType>, line: i32) -> Self{
+    pub fn new(token: TokenType, value: Option<LiteralType>, line: i32) -> Self{
         Self{
             token: token,
             value: value,
@@ -155,7 +155,7 @@ pub fn lex(input: &str) -> Vec<Token>{
                         out.push(Token::new(TokenType::OP(Ops::NOTEQL), None, line));
                         src.next();
                     }else{
-                        out.push(Token::new(TokenType::OP(Ops::NOT), None, line));
+                        out.push(Token::new(TokenType::OP(Ops::BANG), None, line));
                     }
                 }
             },
