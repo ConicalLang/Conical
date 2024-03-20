@@ -1,2 +1,2 @@
-# Conical
-A modern c-style systems programming language
+# About
+Conical is a modern systems language that is designed with a "simplicity first" mindset.
