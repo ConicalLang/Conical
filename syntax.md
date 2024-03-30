@@ -1,14 +1,14 @@
-head = block ;
-block = decl* ;
-decl = ("const" type assignment) | type (id | (id ",")*) [assignment] ";" ;
+head = block* ;
+block = decl ;
+decl = ("const"? type id assignment) | type (id | (id ",")*) assignment? ";" ;
 assignment = "=" expression ;
 expression = terminal | unary | binary | "(" expression ")" ;
 unary = ("-" | "!" | "~" | "&" | "^") terminal ;
 binary = terminal ("+" | "-" | "/" | "*" | ".") terminal ;
 terminal = ident | num | string | char ;
-ident = alph [\[0-9\]] ;
-num = [\1-9\] [\0-9\]* ;
+ident = alph [0-9]?;
+num = [1-9] [0-9]* ;
 string = "\"" alph* "\"" ;
-alph = ([\a-b\] | [\A-B\]);
+alph = ([a-b] | [A-B]) ;
 char = "'" alph "'" ;
 type = "i8" | "i16" | "i32" | "i64" | "i128" | "u8" | "u16" | "u32" | "u64" | "usize" | "char" | "string" | "f32" | "f64" 
