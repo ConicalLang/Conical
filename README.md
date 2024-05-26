@@ -1,3 +1,5 @@
+# WARNING: No features have actually been implemented yet!
+
 # About
 Conical is a modern systems language that is designed with a "simplicity first" mindset. While many modern languages strive to have as much abstraction as possible. Conical tries to be as *readable* as possible. This means that, while there *are* various different abstractions,that is not the goal of the language. For example, types for functions and variables are written like in C style languages (`type function(type arg);`) instead of the more modern convention of using '->' and ':' (`fn function(arg: type)->type`).
 
